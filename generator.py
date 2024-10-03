@@ -3,8 +3,13 @@ import json
 import base64
 from PIL import Image
 
-
+# will distort image
 def resize(image):
+    img = Image.open(image)
+    return img.resize((384, 384))
+
+# maintains aspect ratio
+def scale(image):
     base_width = 384
     img = Image.open(image)
     wpercent = (base_width / float(img.size[0]))
@@ -70,7 +75,7 @@ class Generator:
     def generate_image(self, output, person_image_path="person.jpg"):
         try:
             prompt = (
-                """From the description of the garment below, 
+                """From the description of the shoes below, 
                 edit this picture so the person wears it.
                 "PLEASE DO NOT CHANGE THE PERSON'S FACE!!!
                 Make sure the color matches the description: """ + output
@@ -102,7 +107,6 @@ class Generator:
                 base64_bytes = base64_image.encode('ascii')
                 image_bytes = base64.b64decode(base64_bytes)
 
-                print("hi")
                 with open("result.jpg", "wb") as binary_file:
                     binary_file.write(image_bytes)
             else:
