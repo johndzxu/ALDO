@@ -3,6 +3,10 @@ import json
 import base64
 from PIL import Image
 
+#these for cropping
+import cv2
+import matplotlib.pyplot as plt
+
 # will distort image
 def resize(image):
     img = Image.open(image)
@@ -106,7 +110,6 @@ class Generator:
                 base64_image = artifacts[0].get("base64")
                 base64_bytes = base64_image.encode('ascii')
                 image_bytes = base64.b64decode(base64_bytes)
-
                 with open("result.jpg", "wb") as binary_file:
                     binary_file.write(image_bytes)
             else:
@@ -114,3 +117,37 @@ class Generator:
 
         except Exception as e:
             print(f"An error occurred in generate_image: {e}")
+
+
+
+
+
+# Load the image ## INPUT here, have to much the name of the image
+image = cv2.imread("input_image.jpg")
+# Get the original dimensions
+original_height, original_width = image.shape[:2]
+# Calculate new dimensions
+def calculate_new_dimensions(original_width, original_height):
+    # Find the nearest multiples of 64
+    new_width = (original_width // 64) * 64
+    new_height = (original_height // 64) * 64
+    
+    # Maintain the aspect ratio
+    aspect_ratio = original_width / original_height
+
+    # Adjust to ensure dimensions are less than or equal to 400
+    if new_width > 400 or new_height > 400:
+        if new_width > new_height:
+            new_width = min(new_width, 400)
+            new_height = int(new_width / aspect_ratio)
+        else:
+            new_height = min(new_height, 400)
+            new_width = int(new_height * aspect_ratio)
+    
+    return new_width, new_height
+
+# Get the new dimensions
+new_width, new_height = calculate_new_dimensions(original_width, original_height)
+resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+# Save the resized image
+cv2.imwrite("output_image.jpg", resized_image)
