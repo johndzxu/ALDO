@@ -41,7 +41,7 @@ def resize(img):
     resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
     # Save the resized image
     cv2.imwrite("resized_image.jpg", resized_image) ##see the pic
-    st.image(resized_image, caption='Result Image', use_column_width=True)
+    #st.image(resized_image, caption='Result Image', use_column_width=True)
 
     return resized_image
 
