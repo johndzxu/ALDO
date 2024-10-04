@@ -2,11 +2,48 @@ import boto3
 import json
 import base64
 from PIL import Image
+import cv2
+import matplotlib.pyplot as plt
 
-# will distort image
-def resize(image):
-    img = Image.open(image)
-    return img.resize((384, 384))
+#def resize(image):
+#    img = Image.open(image)
+#    return img.resize((384, 384))
+
+# Load the image
+def resize(img):
+    
+    image = cv2.imread(img)
+
+# Get the original dimensions
+    original_height, original_width = image.shape[:2]
+# Calculate new dimensions
+    def calculate_new_dimensions(original_width, original_height):
+        # Find the nearest multiples of 64
+        new_width = (original_width // 64) * 64
+        new_height = (original_height // 64) * 64
+
+        # Maintain the aspect ratio
+        aspect_ratio = original_width / original_height
+
+        # Adjust to ensure dimensions are less than or equal to 400
+        if new_width > 400 or new_height > 400:
+            if new_width > new_height:
+                new_width = min(new_width, 400)
+                new_height = int(new_width / aspect_ratio)
+            else:
+                new_height = min(new_height, 400)
+                new_width = int(new_height * aspect_ratio)
+
+        return new_width, new_height
+
+    # Get the new dimensions
+    new_width, new_height = calculate_new_dimensions(original_width, original_height)
+    resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    # Save the resized image
+    cv2.imwrite("resized_image.jpg", resized_image)
+    
+    return resized_image
+
 
 # maintains aspect ratio
 def scale(image):
@@ -75,22 +112,37 @@ class Generator:
     def generate_image(self, output, person_image_path="person.jpg"):
         try:
             prompt = (
-                """From the description of the shoes below, 
-                edit this picture so the person wears it.
-                "PLEASE DO NOT CHANGE THE PERSON'S FACE!!!
-                Make sure the color matches the description: """ + output
+                "replace shoes with " + output
             )
 
 
             with open(person_image_path, "rb") as image_file:
                 init_image = base64.b64encode(image_file.read()).decode('utf8')
 
-            body = json.dumps({
-                "text_prompts": [{"text": prompt}],
-                "init_image": init_image
-            })
+            body=json.dumps({
+                "imageVariationParams": {
+                "images": [ init_image ],
+                "text": prompt,
+                "similarityStrength": 0.7 },
+                "taskType": "IMAGE_VARIATION",
+                "imageGenerationConfig":
+                    {"cfgScale":8,
+                     "seed":0,
+                     "width":1024,
+                     "height":1024,
+                     "numberOfImages":1
+                    }
+                })
+            
+            second_payload = {
+             "modelId": "amazon.titan-image-generator-v2:0",
+             "contentType": "application/json",
+             "accept": "application/json",
+             "body": body
+            }
 
-            model_id = "stability.stable-diffusion-xl-v1"
+            model_id = "amazon.titan-image-generator-v2:0"
+
 
             response = self.bedrock_runtime_client.invoke_model(
                 modelId=model_id,
