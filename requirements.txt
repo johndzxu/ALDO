@@ -111,3 +111,5 @@ watchdog==5.0.3
 wcwidth==0.2.13
 widgetsnbextension==4.0.13
 yarl==1.13.1
+opencv-python==4.10.0.84
+opencv-python-headless==4.10.0.84
